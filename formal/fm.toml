@@ -1,0 +1,67 @@
+# Product-owned schema-v1 manifest. The reusable runner is
+# github.com/ORESoftware/formal-methods.rs (`fmctl`). This repository keeps the
+# ores-otel model and planned language adapters; it does not vendor Opto Sync
+# product identifiers or storage layouts.
+schema_version = 1
+project = "ores-otel-export"
+model = "export_bound"
+language = "quint"
+spec = "formal/export_bound.qnt"
+main = "export_bound"
+init = "init"
+step = "step"
+invariants = ["queue_within_capacity"]
+witnesses = []
+
+[toolchain]
+quint = "0.32.0"
+java = ">=17"
+node = "22"
+rust = "1.88.0"
+npx = "npx"
+
+[execution]
+timeout_seconds = 1200
+max_output_bytes = 8388608
+artifacts_dir = ".formal-artifacts"
+
+[simulation]
+backend = "typescript"
+max_samples = 1000
+max_steps = 20
+
+[verification]
+backend = "tlc"
+exhaustive_finite_model = true
+
+[traces]
+format = "itf"
+model_based_testing_metadata = true
+backend = "rust"
+count = 4
+max_steps = 20
+max_samples = 20
+required_actions = ["init", "step"]
+
+[adapters.rust]
+strategy = "itf-json-driver"
+status = "active"
+command = ["python3", "formal/echo.py"]
+observable_state = ["export_bound"]
+implementation = "language-neutral echo adapter until a ores-otel runtime adapter lands"
+
+[adapters.typescript]
+strategy = "itf-json-driver"
+status = "planned"
+
+[adapters.dart]
+strategy = "itf-json-driver"
+status = "planned"
+
+[adapters.gleam]
+strategy = "itf-json-driver"
+status = "planned"
+
+[adapters.go]
+strategy = "itf-json-driver"
+status = "planned"
