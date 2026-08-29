@@ -15,13 +15,48 @@ permissions:
 
 jobs:
   manifest:
-    name: schema-v1 manifest and Quint spec
+    name: schema-v1 manifest and executable Quint proof
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - name: Checkout
+      - name: Check out product model without persisted credentials
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Check out the commit-pinned shared formal runner
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ORESoftware/formal-methods.rs
+          ref: dbe2813ece1a82aaa60efbce19a52b92c4055382
+          path: .formal-runner
+          persist-credentials: false
+      - name: Set up Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+      - name: Set up Java 21 for TLC
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install the manifest-pinned Rust toolchain
+        run: rustup toolchain install 1.88.0 --profile minimal
       - name: Validate manifest shape
         run: python3 scripts/validate_manifest.py
+      - name: Check the adapter boundary fails closed
+        run: python3 -m unittest scripts/test_formal_boundary.py
+      - name: Typecheck the Quint model
+        run: scripts/run-fmctl.sh check
+        env:
+          FORMAL_METHODS_RS: ${{ github.workspace }}/.formal-runner
+          RUSTUP_TOOLCHAIN: 1.88.0
+      - name: Simulate the finite state machine
+        run: scripts/run-fmctl.sh simulate
+        env:
+          FORMAL_METHODS_RS: ${{ github.workspace }}/.formal-runner
+          RUSTUP_TOOLCHAIN: 1.88.0
+      - name: Exhaustively verify all declared invariants
+        run: scripts/run-fmctl.sh verify
+        env:
+          FORMAL_METHODS_RS: ${{ github.workspace }}/.formal-runner
+          RUSTUP_TOOLCHAIN: 1.88.0

@@ -1,3 +1,4 @@
 .formal-artifacts/
+_apalache-out/
 target/
 .DS_Store
