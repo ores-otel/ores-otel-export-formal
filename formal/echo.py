@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Language-neutral fmctl.adapter.v1 echo adapter for standalone e2e tests."""
+"""Fail-closed fmctl.adapter.v1 protocol fixture.
+
+This fixture deliberately cannot certify product conformance because it does not
+execute an ores-otel runtime or compare observable state. It remains useful for
+checking the response envelope without creating a false proof claim.
+"""
 
 from __future__ import annotations
 
@@ -16,16 +21,28 @@ def main() -> None:
     if not traces:
         raise SystemExit("replay request must contain at least one trace")
 
+    mismatches = [
+        {
+            "trace": trace,
+            "step": None,
+            "action": None,
+            "message": "protocol fixture cannot compare product observable state",
+            "expected": {"conformance": "product runtime comparison"},
+            "actual": {"conformance": "not implemented"},
+        }
+        for trace in traces
+    ]
+
     json.dump(
         {
             "protocol": "fmctl.adapter.v1",
-            "success": True,
+            "success": False,
             "traces_total": len(traces),
-            "traces_passed": len(traces),
-            "mismatches": [],
+            "traces_passed": 0,
+            "mismatches": mismatches,
             "implementation": {
                 "language": adapter,
-                "name": "formal-methods-fixture-echo",
+                "name": "formal-methods-fail-closed-fixture",
                 "version": "1",
             },
         },

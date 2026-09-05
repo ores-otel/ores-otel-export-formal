@@ -10,7 +10,7 @@ spec = "formal/export_bound.qnt"
 main = "export_bound"
 init = "init"
 step = "step"
-invariants = ["queue_within_capacity"]
+invariants = ["queue_within_capacity", "stopped_is_empty"]
 witnesses = []
 
 [toolchain]
@@ -45,10 +45,9 @@ required_actions = ["init", "step"]
 
 [adapters.rust]
 strategy = "itf-json-driver"
-status = "active"
-command = ["python3", "formal/echo.py"]
+status = "planned"
 observable_state = ["export_bound"]
-implementation = "language-neutral echo adapter until a ores-otel runtime adapter lands"
+implementation = "requires a product runtime adapter that compares canonical observable state"
 
 [adapters.typescript]
 strategy = "itf-json-driver"
