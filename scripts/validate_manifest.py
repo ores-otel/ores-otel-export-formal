@@ -27,6 +27,24 @@ REQUIRED_TOP = (
 REQUIRED_LANGS = ("rust", "typescript", "dart", "gleam", "go")
 
 
+def safe_spec_path(raw: object) -> pathlib.Path:
+    """Reject absolute, traversal, symlink-escape and malformed model paths."""
+    if (
+        not isinstance(raw, str)
+        or not raw
+        or len(raw) > 512
+        or raw.startswith("/")
+        or "\\\\" in raw
+        or any(part in ("", ".", "..") for part in raw.split("/"))
+    ):
+        raise ValueError("spec must be a bounded, repository-relative POSIX path")
+    path = ROOT / raw
+    resolved = path.resolve()
+    if not resolved.is_relative_to(ROOT.resolve()) or not resolved.is_file():
+        raise ValueError("spec must name a file inside this repository")
+    return resolved
+
+
 def main() -> int:
     if not MANIFEST.is_file():
         print(f"missing {MANIFEST}", file=sys.stderr)
@@ -46,9 +64,10 @@ def main() -> int:
     if not java:
         print("toolchain.java is required", file=sys.stderr)
         return 2
-    spec = ROOT / data["spec"]
-    if not spec.is_file():
-        print(f"spec missing: {spec}", file=sys.stderr)
+    try:
+        spec = safe_spec_path(data["spec"])
+    except ValueError as error:
+        print(f"invalid spec: {error}", file=sys.stderr)
         return 2
     adapters = data.get("adapters")
     if not isinstance(adapters, dict):
