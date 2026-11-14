@@ -34,7 +34,7 @@ def safe_spec_path(raw: object) -> pathlib.Path:
         or not raw
         or len(raw) > 512
         or raw.startswith("/")
-        or "\\\\" in raw
+        or chr(92) in raw
         or any(part in ("", ".", "..") for part in raw.split("/"))
     ):
         raise ValueError("spec must be a bounded, repository-relative POSIX path")
